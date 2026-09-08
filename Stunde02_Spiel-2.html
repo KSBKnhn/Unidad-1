@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>El mundo del español – Lernspiel Stunde 2</title>
+<style>
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#1D1D1F; --ink2:#6E6E73;
+    --blue:#0A84FF; --green:#30D158; --orange:#FF9F0A; --purple:#BF5AF2;
+    --blue-soft:#EAF3FF; --green-soft:#EAFBEF; --orange-soft:#FFF4E2; --purple-soft:#F7EDFC;
+    --ok:#30D158; --err:#FF453A; --radius:20px;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:var(--bg); color:var(--ink);
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(12px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  }
+  .app{width:100%; max-width:440px; display:flex; flex-direction:column; gap:14px; flex:1;}
+
+  header{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 2px;}
+  .level-chip{font-size:13px; font-weight:600; color:var(--ink2); background:var(--card);
+    border-radius:999px; padding:7px 13px; box-shadow:var(--shadow);}
+  .score-chip{font-size:15px; font-weight:700; background:var(--ink); color:#fff;
+    border-radius:999px; padding:7px 15px; font-variant-numeric:tabular-nums;}
+  .progress{width:100%; height:6px; background:#E4E4E8; border-radius:999px; overflow:hidden;}
+  .progress > div{height:100%; width:0%; background:var(--ink); border-radius:999px; transition:width .4s cubic-bezier(.4,0,.2,1);}
+
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 22px;
+    animation:pop .35s cubic-bezier(.2,.8,.3,1);}
+  @keyframes pop{from{opacity:0; transform:translateY(10px) scale(.985);} to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion: reduce){ .card{animation:none;} .progress > div{transition:none;} }
+
+  h1{font-size:32px; line-height:1.15; margin:0 0 8px; font-weight:800; letter-spacing:-.02em;}
+  h2{font-size:21px; line-height:1.3; margin:0 0 6px; font-weight:700; letter-spacing:-.01em;}
+  p{margin:0; color:var(--ink2); font-size:16px; line-height:1.5;}
+  .task-cat{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700;
+    border-radius:999px; padding:6px 12px; margin-bottom:14px;}
+  .cat-mundo{background:var(--green-soft); color:#1FA046;}
+  .cat-signos{background:var(--purple-soft); color:#9B34D0;}
+  .cat-palabras{background:var(--orange-soft); color:#C77700;}
+  .cat-repaso{background:var(--blue-soft); color:var(--blue);}
+  .prompt{font-size:22px; font-weight:700; line-height:1.35; margin-bottom:18px; color:var(--ink);}
+  .prompt .gap{display:inline-block; min-width:56px; border-bottom:2.5px dashed #C7C7CC; text-align:center; color:var(--purple); font-weight:800;}
+
+  .options{display:flex; flex-direction:column; gap:10px;}
+  .options.rowed{flex-direction:row;}
+  .options.rowed .opt{text-align:center;}
+  .opt{
+    width:100%; min-height:56px; border:none; border-radius:16px; background:#F2F2F5;
+    font:inherit; font-size:18px; font-weight:600; color:var(--ink); padding:15px 18px;
+    text-align:left; cursor:pointer; transition:transform .12s ease, background .15s ease;
+  }
+  .opt:active{transform:scale(.975);}
+  .opt.correct{background:var(--ok); color:#fff;}
+  .opt.wrong{background:var(--err); color:#fff;}
+  .opt:disabled{cursor:default; opacity:1;}
+  .opt.dim{opacity:.45;}
+
+  .feedback{margin-top:14px; border-radius:14px; padding:13px 15px; font-size:15px; line-height:1.45;
+    display:none; animation:pop .3s ease;}
+  .feedback.show{display:block;}
+  .feedback.good{background:var(--green-soft); color:#157A38;}
+  .feedback.bad{background:#FFECEB; color:#C22C22;}
+
+  .btn{
+    width:100%; min-height:54px; border:none; border-radius:16px; background:var(--ink); color:#fff;
+    font:inherit; font-size:18px; font-weight:700; cursor:pointer; padding:15px;
+    transition:transform .12s ease, opacity .15s ease; margin-top:16px;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.hidden{display:none;}
+  .btn.secondary{background:#E9E9EC; color:var(--ink);}
+
+  .write-label{font-size:15px; font-weight:700; margin:0 0 8px;}
+  input[type=text]{
+    width:100%; min-height:54px; font:inherit; font-size:18px; padding:14px 16px;
+    border:2px solid #E4E4E8; border-radius:16px; background:#FAFAFC; color:var(--ink); outline:none;
+    transition:border-color .15s ease;
+  }
+  input[type=text]:focus{border-color:var(--purple); background:#fff;}
+  .hint{font-size:14px; color:var(--ink2); margin-top:8px;}
+
+  .hero .emoji{font-size:52px; line-height:1; margin-bottom:12px;}
+  .legend{display:flex; flex-direction:column; gap:9px; margin:18px 0 4px;}
+  .legend .row{display:flex; align-items:center; gap:10px; font-size:16px; font-weight:600;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none;}
+  .result-note{font-size:56px; font-weight:800; letter-spacing:-.03em; margin:6px 0 2px;}
+  .result-pts{font-size:17px; color:var(--ink2); font-weight:600;}
+  .skills{display:flex; flex-direction:column; gap:10px; margin-top:18px;}
+  .skill{display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:#F7F7F9; border-radius:14px; padding:13px 15px; font-size:15.5px; font-weight:600;}
+  .skill .tag{font-size:13px; font-weight:700; border-radius:999px; padding:5px 11px; flex:none;}
+  .tag.can{background:var(--green-soft); color:#157A38;}
+  .tag.train{background:var(--orange-soft); color:#C77700;}
+  footer{margin-top:auto; padding-top:14px; font-size:12.5px; color:#A0A0A6; text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="level-chip" id="levelChip">🌍</span>
+    <span class="score-chip" id="scoreChip">0 / 15</span>
+  </header>
+  <div class="progress"><div id="bar"></div></div>
+  <main id="stage"></main>
+  <footer>Unidad 1 · Stunde 2 · A_tope.com · 🟢 Mundo 🟣 Signos 🟠 Palabras 🔵 Repaso</footer>
+</div>
+
+<script>
+"use strict";
+/* ============ Daten – nur Stoff aus Stunde 1–2 (LB S. 12–13) ============ */
+
+const CATS = {
+  mundo:    {cls:"cat-mundo",    dot:"var(--green)",  label:"🌍 El mundo",  de:"Länder & Städte kennen"},
+  signos:   {cls:"cat-signos",   dot:"var(--purple)", label:"✍️ Signos",    de:"Zeichen & Regeln (ñ, ¿?, y→e, o→u)"},
+  palabras: {cls:"cat-palabras", dot:"var(--orange)", label:"🔎 Palabras",  de:"Wörter erschließen"},
+  repaso:   {cls:"cat-repaso",   dot:"var(--blue)",   label:"🔁 Repaso",    de:"Wiederholung: mich vorstellen"}
+};
+
+/* Level 1 – Wiedererkennen (je 1 Punkt) */
+const L1 = [
+  {cat:"palabras", q:"Was bedeutet «la biblioteca»?", opts:["die Bibliothek","die Buchhandlung","der Balkon"], ok:0,
+   why:"Denk an <b>Bibliothek</b> – viele Sprachen helfen dir hier."},
+  {cat:"palabras", q:"Was bedeutet «la informática»?", opts:["die Information","die Informatik","das Formular"], ok:1,
+   why:"Wie Englisch <i>informatics</i> – die Informatik."},
+  {cat:"mundo", q:"Lima ist die Hauptstadt von …", opts:["España","Perú","Marruecos"], ok:1,
+   why:"«Soy de Lima, la capital de Perú.» – kennst du aus dem Buch."},
+  {cat:"mundo", q:"Welche Stadt liegt in Spanien?", opts:["Sevilla","Lima","Miami"], ok:0,
+   why:"Sevilla liegt in Spanien – Lima in Perú, Miami in den USA."},
+  {cat:"repaso", q:"Welche Antwort passt zu:<br>«¿De dónde eres?»", opts:["Me llamo Ana.","Hablo inglés.","Soy de Madrid."], ok:2,
+   why:"Herkunft = grün: <b>Soy de</b> Madrid."}
+];
+
+/* Level 2 – Anwenden (je 1 Punkt) */
+const L2 = [
+  {cat:"signos", before:"Hablo alemán ", after:" inglés.", opts:["y","e","o"], ok:1,
+   why:"Vor <b>i-</b> wird y zu <b>e</b>: alemán <b>e</b> inglés."},
+  {cat:"signos", before:"¿Eres de La Coruña ", after:" Oviedo?", opts:["o","y","u"], ok:2,
+   why:"Vor <b>o-</b> wird o zu <b>u</b>: La Coruña <b>u</b> Oviedo."},
+  {cat:"signos", q:"Welches Wort ist richtig geschrieben?", opts:["Espana","España","Espanja"], ok:1,
+   why:"Das <b>ñ</b> gehört zu España – ein eigener Buchstabe!"},
+  {cat:"signos", q:"Wie schreibt man eine Frage auf Spanisch?", opts:["¿Cómo te llamas?","Cómo te llamas?","!Cómo te llamas!"], ok:0,
+   why:"Fragen stehen zwischen <b>¿</b> … <b>?</b> – das umgedrehte Zeichen kommt an den Anfang."},
+  {cat:"mundo", before:"Soy de Lima, la capital de ", after:".", opts:["España","Alemania","Perú"], ok:2,
+   why:"Lima ist die Hauptstadt von <b>Perú</b>."}
+];
+
+/* Level 3 – Produzieren (2 + 1 + 2 Punkte) */
+const L3 = [
+  {cat:"repaso", pts:2, label:"Frag deinen neuen Austauschpartner, woher er kommt.", ph:"¿…?",
+   check:t=>/de donde eres/.test(t),
+   tip:"Die grüne Frage aus Stunde 1: <b>¿De dónde eres?</b>",
+   bonusTip:t=>(!t.includes("¿")||!t.includes("?")) ? " Denk beim nächsten Mal an <b>¿ … ?</b> – aber der Satz stimmt!" : "",
+   model:"¿De dónde eres?"},
+  {cat:"palabras", pts:1, label:"Schreibe das spanische Wort für „Telefon“ – mit Artikel.", ph:"el …",
+   check:t=>/^el telefono$/.test(t.replace(/[¡!¿?.]/g,"").trim()),
+   tip:"Fast wie im Deutschen: <b>el teléfono</b>.",
+   model:"el teléfono"},
+  {cat:"signos", pts:2, label:"Schreibe auf Spanisch: „Ich spreche Deutsch und Englisch.“", ph:"Hablo …",
+   check:t=>/^hablo\s+aleman\s+e\s+ingles[.!]?$/.test(t) || (/^hablo\s/.test(t) && /aleman/.test(t) && /\be\s+ingles/.test(t)),
+   special:t=>/\by\s+ingles/.test(t) ? "Fast! Vor <b>i-</b> wird <b>y</b> zu <b>e</b>: „alemán <b>e</b> inglés“." : null,
+   tip:"Beginne mit <b>Hablo</b> – und denk an die neue Regel vor „inglés“.",
+   model:"Hablo alemán e inglés."}
+];
+
+const NOTEN = ["6","5−","5","5+","4−","4","4+","3−","3","3+","2−","2","2+","1−","1","1+"];
+const TOTAL_STEPS = L1.length + L2.length + L3.length;
+
+/* ============ Zustand ============ */
+let score = 0, step = 0;
+const catStats = {mundo:{ok:0,all:0}, signos:{ok:0,all:0}, palabras:{ok:0,all:0}, repaso:{ok:0,all:0}};
+const stage = document.getElementById("stage");
+const bar = document.getElementById("bar");
+const scoreChip = document.getElementById("scoreChip");
+const levelChip = document.getElementById("levelChip");
+
+function setScore(pts){ score += pts; scoreChip.textContent = score + " / 15"; }
+function setProgress(){ bar.style.width = (step / TOTAL_STEPS * 100) + "%"; }
+function norm(s){
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u0302\u0308]/g,"")
+          .replace(/\s+/g," ").trim();
+}
+
+/* ============ Screens ============ */
+function startScreen(){
+  levelChip.textContent = "🌍";
+  stage.innerHTML = `
+    <div class="card hero">
+      <div class="emoji">🌍</div>
+      <h1>El mundo<br>del español</h1>
+      <p>21 Länder, besondere Zeichen und dein Wörter-Detektiv-Blick: Teste, was du heute gelernt hast – plus etwas Wiederholung aus Stunde 1.</p>
+      <div class="legend">
+        <div class="row"><span class="dot" style="background:var(--green)"></span>El mundo – Länder & Städte</div>
+        <div class="row"><span class="dot" style="background:var(--purple)"></span>Signos – ñ, ¿…?, y→e, o→u</div>
+        <div class="row"><span class="dot" style="background:var(--orange)"></span>Palabras – Wörter erschließen</div>
+        <div class="row"><span class="dot" style="background:var(--blue)"></span>Repaso – mich vorstellen</div>
+      </div>
+      <p style="margin-top:12px; font-size:14.5px;">15 Punkte = Notenpunkte wie in der Oberstufe.<br>Dauer: ca. 10 Minuten.</p>
+      <button class="btn" id="go">Empezamos · Los geht's</button>
+    </div>`;
+  document.getElementById("go").onclick = ()=>{ runL1(0); };
+}
+
+/* ---------- Level 1 & 2 (Multiple Choice / Lücken) ---------- */
+function runMC(list, i, levelName, nextFn){
+  if(i >= list.length) return nextFn();
+  levelChip.textContent = levelName;
+  const t = list[i], c = CATS[t.cat];
+  catStats[t.cat].all++;
+  const promptHtml = t.q !== undefined
+    ? t.q
+    : `${t.before}<span class="gap" id="gap">___</span>${t.after}`;
+  const short = t.opts.every(o=>o.length <= 3);
+  stage.innerHTML = `
+    <div class="card">
+      <span class="task-cat ${c.cls}">${c.label}</span>
+      <div class="prompt">${promptHtml}</div>
+      <div class="options ${short ? "rowed" : ""}">${t.opts.map((o,k)=>`<button class="opt" data-k="${k}">${o}</button>`).join("")}</div>
+      <div class="feedback" id="fb"></div>
+      <button class="btn hidden" id="next">Weiter</button>
+    </div>`;
+  const fb = document.getElementById("fb"), next = document.getElementById("next"), gap = document.getElementById("gap");
+  stage.querySelectorAll(".opt").forEach(btn=>{
+    btn.onclick = ()=>{
+      const k = +btn.dataset.k;
+      stage.querySelectorAll(".opt").forEach(b=>{ b.disabled = true; if(+b.dataset.k!==t.ok && b!==btn) b.classList.add("dim"); });
+      if(gap) gap.textContent = t.opts[t.ok];
+      if(k === t.ok){
+        btn.classList.add("correct"); setScore(1); catStats[t.cat].ok++;
+        fb.className = "feedback show good"; fb.innerHTML = "✓ ¡Muy bien! +1 Punkt";
+      }else{
+        btn.classList.add("wrong");
+        stage.querySelector(`.opt[data-k="${t.ok}"]`).classList.add("correct");
+        fb.className = "feedback show bad"; fb.innerHTML = t.why;
+      }
+      step++; setProgress(); next.classList.remove("hidden");
+    };
+  });
+  next.onclick = ()=> runMC(list, i+1, levelName, nextFn);
+}
+
+/* ---------- Level 3 (Schreiben) ---------- */
+function runL3(i){
+  if(i >= L3.length) return endScreen();
+  levelChip.textContent = "Level 3 · Schreiben";
+  const t = L3[i], c = CATS[t.cat];
+  catStats[t.cat].all++;
+  let attempt = 1;
+  stage.innerHTML = `
+    <div class="card">
+      <span class="task-cat ${c.cls}">${c.label}</span>
+      <h2>Jetzt du! ✍️</h2>
+      <p class="write-label" style="margin-top:10px">${t.label}</p>
+      <input type="text" id="inp" placeholder="${t.ph}" autocomplete="off" autocapitalize="sentences" enterkeyhint="done">
+      <p class="hint">Tipp: Groß-/Kleinschreibung und Akzente sind egal.</p>
+      <div class="feedback" id="fb"></div>
+      <button class="btn" id="check">Prüfen</button>
+      <button class="btn secondary hidden" id="next">Weiter</button>
+    </div>`;
+  const inp = document.getElementById("inp"), fb = document.getElementById("fb");
+  const check = document.getElementById("check"), next = document.getElementById("next");
+  inp.focus();
+  inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); check.click(); } });
+
+  check.onclick = ()=>{
+    const val = norm(inp.value);
+    if(!val){ fb.className="feedback show bad"; fb.innerHTML = "Schreib zuerst deinen Satz. 🙂"; return; }
+    const special = t.special ? t.special(val) : null;
+    if(t.check(val)){
+      const pts = attempt===1 ? t.pts : 1;
+      setScore(pts); catStats[t.cat].ok++;
+      const bonus = t.bonusTip ? t.bonusTip(inp.value) : "";
+      fb.className="feedback show good";
+      fb.innerHTML = "✓ ¡Genial! +" + pts + (pts===1?" Punkt":" Punkte") + "." + bonus;
+      check.classList.add("hidden"); inp.disabled = true;
+      step++; setProgress(); next.classList.remove("hidden");
+    }else if(attempt === 1){
+      attempt = 2;
+      fb.className="feedback show bad";
+      fb.innerHTML = (special || t.tip) + "<br>Versuch es noch einmal – dann gibt es 1 Punkt.";
+    }else{
+      fb.className="feedback show bad";
+      fb.innerHTML = "So geht es: <b>" + t.model + "</b> – das üben wir weiter.";
+      check.classList.add("hidden"); inp.disabled = true;
+      step++; setProgress(); next.classList.remove("hidden");
+    }
+  };
+  next.onclick = ()=> runL3(i+1);
+}
+
+/* ---------- Endauswertung ---------- */
+function endScreen(){
+  levelChip.textContent = "Ergebnis";
+  bar.style.width = "100%";
+  const note = NOTEN[score];
+  const rows = Object.keys(CATS).map(key=>{
+    const s = catStats[key], good = s.all === 0 || s.ok >= Math.ceil(s.all * 0.75);
+    return `<div class="skill">
+      <span><span class="dot" style="background:${CATS[key].dot}; display:inline-block; vertical-align:-1px; margin-right:8px;"></span>${CATS[key].de}</span>
+      <span class="tag ${good?'can':'train'}">${good ? "kannst du ✓" : "noch üben"}</span>
+    </div>`;
+  }).join("");
+  stage.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <p style="font-size:15px; font-weight:700; color:var(--ink2);">Deine Notenpunkte heute</p>
+      <div class="result-note">${score} <span style="font-size:26px; color:var(--ink2); font-weight:700;">/ 15</span></div>
+      <p class="result-pts">entspricht der Note <b style="color:var(--ink)">${note}</b></p>
+      <div class="skills" style="text-align:left;">${rows}</div>
+      <p style="margin-top:16px; font-size:14.5px;">📸 Mach einen Screenshot für die Hausaufgabe.</p>
+      <button class="btn" id="again">Noch einmal spielen</button>
+    </div>`;
+  document.getElementById("again").onclick = ()=>{
+    score = 0; step = 0;
+    for(const k in catStats){ catStats[k].ok = 0; catStats[k].all = 0; }
+    scoreChip.textContent = "0 / 15"; bar.style.width = "0%";
+    startScreen();
+  };
+}
+
+function startL1(){ runMC(L1, 0, "Level 1 · Erkennen", startL2); }
+function startL2(){ runMC(L2, 0, "Level 2 · Anwenden", ()=>runL3(0)); }
+function runL1(){ startL1(); }
+
+startScreen();
+</script>
+</body>
+</html>
