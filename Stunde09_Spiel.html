@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Presentar + un/una – Lernspiel Stunde 9</title>
+<style>
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#1D1D1F; --ink2:#6E6E73;
+    --blue:#0A84FF; --green:#30D158; --green-ink:#1FA046; --grey:#8E8E93;
+    --brown:#A2845E; --brown-ink:#7A5C36; --brown-soft:#F2EBE3;
+    --blue-soft:#EAF3FF; --green-soft:#EAFBEF; --orange-soft:#FFF4E2; --grey-soft:#EFEFF1;
+    --ok:#30D158; --err:#FF453A; --radius:20px;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:var(--bg); color:var(--ink);
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(12px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  }
+  .app{width:100%; max-width:440px; display:flex; flex-direction:column; gap:14px; flex:1;}
+
+  header{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 2px;}
+  .level-chip{font-size:13px; font-weight:600; color:var(--ink2); background:var(--card);
+    border-radius:999px; padding:7px 13px; box-shadow:var(--shadow);}
+  .score-chip{font-size:15px; font-weight:700; background:var(--ink); color:#fff;
+    border-radius:999px; padding:7px 15px; font-variant-numeric:tabular-nums;}
+  .progress{width:100%; height:6px; background:#E4E4E8; border-radius:999px; overflow:hidden;}
+  .progress > div{height:100%; width:0%; background:var(--ink); border-radius:999px; transition:width .4s cubic-bezier(.4,0,.2,1);}
+
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 22px;
+    animation:pop .35s cubic-bezier(.2,.8,.3,1);}
+  @keyframes pop{from{opacity:0; transform:translateY(10px) scale(.985);} to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion: reduce){ .card{animation:none;} .progress > div{transition:none;} }
+
+  h1{font-size:31px; line-height:1.15; margin:0 0 8px; font-weight:800; letter-spacing:-.02em;}
+  h2{font-size:21px; line-height:1.3; margin:0 0 6px; font-weight:700; letter-spacing:-.01em;}
+  p{margin:0; color:var(--ink2); font-size:16px; line-height:1.5;}
+  .task-cat{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700;
+    border-radius:999px; padding:6px 12px; margin-bottom:14px;}
+  .cat-articulo{background:var(--brown-soft); color:var(--brown-ink);}
+  .cat-presentar{background:var(--blue-soft); color:var(--blue);}
+  .cat-repaso{background:var(--grey-soft); color:#5E5E63;}
+  .prompt{font-size:22px; font-weight:700; line-height:1.35; margin-bottom:18px; color:var(--ink);}
+  .prompt .gap{display:inline-block; min-width:56px; border-bottom:2.5px dashed #C7C7CC; text-align:center; color:var(--brown-ink); font-weight:800;}
+
+  .options{display:flex; flex-direction:column; gap:10px;}
+  .options.rowed{flex-direction:row;}
+  .options.rowed .opt{text-align:center;}
+  .opt{
+    width:100%; min-height:56px; border:none; border-radius:16px; background:#F2F2F5;
+    font:inherit; font-size:18px; font-weight:600; color:var(--ink); padding:15px 18px;
+    text-align:left; cursor:pointer; transition:transform .12s ease, background .15s ease;
+  }
+  .opt:active{transform:scale(.975);}
+  .opt.correct{background:var(--ok); color:#fff;}
+  .opt.wrong{background:var(--err); color:#fff;}
+  .opt:disabled{cursor:default; opacity:1;}
+  .opt.dim{opacity:.45;}
+
+  .feedback{margin-top:14px; border-radius:14px; padding:13px 15px; font-size:15px; line-height:1.45;
+    display:none; animation:pop .3s ease;}
+  .feedback.show{display:block;}
+  .feedback.good{background:var(--green-soft); color:#157A38;}
+  .feedback.bad{background:#FFECEB; color:#C22C22;}
+
+  .btn{
+    width:100%; min-height:54px; border:none; border-radius:16px; background:var(--ink); color:#fff;
+    font:inherit; font-size:18px; font-weight:700; cursor:pointer; padding:15px;
+    transition:transform .12s ease, opacity .15s ease; margin-top:16px;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.hidden{display:none;}
+  .btn.secondary{background:#E9E9EC; color:var(--ink);}
+
+  .write-label{font-size:15px; font-weight:700; margin:0 0 8px;}
+  input[type=text]{
+    width:100%; min-height:54px; font:inherit; font-size:18px; padding:14px 16px;
+    border:2px solid #E4E4E8; border-radius:16px; background:#FAFAFC; color:var(--ink); outline:none;
+    transition:border-color .15s ease;
+  }
+  input[type=text]:focus{border-color:var(--brown); background:#fff;}
+  .hint{font-size:14px; color:var(--ink2); margin-top:8px;}
+
+  .hero .emoji{font-size:52px; line-height:1; margin-bottom:12px;}
+  .legend{display:flex; flex-direction:column; gap:9px; margin:18px 0 4px;}
+  .legend .row{display:flex; align-items:center; gap:10px; font-size:16px; font-weight:600;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none;}
+  .result-note{font-size:56px; font-weight:800; letter-spacing:-.03em; margin:6px 0 2px;}
+  .result-pts{font-size:17px; color:var(--ink2); font-weight:600;}
+  .skills{display:flex; flex-direction:column; gap:10px; margin-top:18px;}
+  .skill{display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:#F7F7F9; border-radius:14px; padding:13px 15px; font-size:15.5px; font-weight:600;}
+  .skill .tag{font-size:13px; font-weight:700; border-radius:999px; padding:5px 11px; flex:none;}
+  .tag.can{background:var(--green-soft); color:#157A38;}
+  .tag.train{background:var(--orange-soft); color:#C77700;}
+  footer{margin-top:auto; padding-top:14px; font-size:12.5px; color:#A0A0A6; text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="level-chip" id="levelChip">👥</span>
+    <span class="score-chip" id="scoreChip">0 / 15</span>
+  </header>
+  <div class="progress"><div id="bar"></div></div>
+  <main id="stage"></main>
+  <footer>Unidad 1 · Stunde 9 · A_tope.com · 🤎 un/una 🔵 Presentar ⚪ Repaso</footer>
+</div>
+
+<script>
+"use strict";
+/* ===== Daten – Personen vorstellen + un/una (Stoff der Stunden 1–9) ===== */
+
+const CATS = {
+  articulo:  {cls:"cat-articulo",  dot:"var(--brown)", label:"🤎 un/una",    de:"Den richtigen Artikel wählen"},
+  presentar: {cls:"cat-presentar", dot:"var(--blue)",  label:"👥 Presentar", de:"Eine Person vorstellen (3. Person)"},
+  repaso:    {cls:"cat-repaso",    dot:"var(--grey)",  label:"🔁 Repaso",    de:"Wiederholung: no, ser, -ar"}
+};
+
+/* Level 1 – Wiedererkennen (je 1 Punkt) */
+const L1 = [
+  {cat:"articulo", q:"amigo – welcher Artikel?", opts:["un","una"], ok:0,
+   why:"Männlich, endet auf -o: <b>un</b> amigo."},
+  {cat:"articulo", q:"plaza – welcher Artikel?", opts:["un","una"], ok:1,
+   why:"Weiblich, endet auf -a: <b>una</b> plaza."},
+  {cat:"articulo", q:"televisión – welcher Artikel?", opts:["un","una"], ok:1,
+   why:"Vorsicht, endet nicht auf -a: <b>una</b> televisión (Wörter auf -ión sind weiblich)."},
+  {cat:"presentar", q:"Du stellst deine Freundin Lucía vor:", opts:["Él es Lucía, un amigo.","Ella es Lucía, una amiga.","Ella es Lucía, un amigo."], ok:1,
+   why:"Weiblich – beides anpassen: <b>Ella</b> es Lucía, <b>una amiga</b>."},
+  {cat:"repaso", q:"Verneine: «Marta trabaja.»", opts:["Marta no trabaja.","Marta trabaja no.","No, Marta trabaja."], ok:0,
+   why:"Stoppschild vor das Verb: Marta <b>no</b> trabaja. ⛔ – aus Stunde 8."}
+];
+
+/* Level 2 – Anwenden: Lücken (je 1 Punkt) */
+const L2 = [
+  {cat:"presentar", before:"Mira, él es Tarek, ", after:" amigo.", opts:["un","una"], ok:0,
+   why:"Tarek ist männlich: <b>un</b> amigo."},
+  {cat:"presentar", before:"Tarek ", after:" de Casablanca. (ser)", opts:["eres","es","soy"], ok:1,
+   why:"él → <b>es</b>: Tarek es de Casablanca."},
+  {cat:"presentar", before:"Tarek ", after:" español, francés y árabe. (hablar)", opts:["hablo","hablas","habla"], ok:2,
+   why:"él → -ar-Endung <b>-a</b>: habl<b>a</b>."},
+  {cat:"articulo", before:"Marta es ", after:" compañera de clase.", opts:["un","una"], ok:1,
+   why:"Weiblich: <b>una</b> compañera de clase."},
+  {cat:"repaso", before:"Tarek todavía no ", after:". (trabajar)", opts:["trabaja","trabajo","trabajas"], ok:0,
+   why:"Über Tarek (er): todavía no <b>trabaja</b> – wie bei Marta in Texto A."}
+];
+
+/* Level 3 – Produzieren (2 + 2 + 1 Punkte) */
+const L3 = [
+  {cat:"presentar", pts:2, label:"Stell Tarek vor: Sag, wer er ist und woher er kommt (Casablanca).", ph:"Él es … Es de …",
+   check:t=>{const s=t.replace(/[¡!¿?.,]/g,""); return /(^|\s)el es tarek\b/.test(s) && /es de casablanca/.test(s);},
+   special:t=>{const s=t.replace(/[¡!¿?.,]/g,""); return (/(^|\s)ella es tarek/.test(s)) ? "Tarek ist männlich: <b>él</b>, nicht ella." : ((/(^|\s)el es tarek\b/.test(s) && !/es de casablanca/.test(s)) ? "Gut! Jetzt noch die Herkunft: <b>Es de Casablanca.</b>" : null);},
+   tip:"Zwei Sätze: <b>Él es Tarek. Es de Casablanca.</b>",
+   model:"Él es Tarek. Es de Casablanca."},
+  {cat:"articulo", pts:2, label:"Schreibe: „Sie ist eine Arbeitskollegin.“", ph:"Es …",
+   check:t=>/una companera de trabajo/.test(t.replace(/̃/g,"").replace(/[¡!¿?.,]/g,"")),
+   special:t=>{const s=t.replace(/̃/g,"").replace(/[¡!¿?.,]/g,""); return /un companero de trabajo/.test(s) ? "Fast! SIE ist weiblich: <b>una compañera</b> de trabajo." : (/una companera\b(?!.*trabajo)/.test(s) ? "Gut! Es fehlt noch <b>de trabajo</b> – die Arbeitskollegin." : null);},
+   tip:"Weiblich + Arbeit: <b>Es una compañera de trabajo.</b>",
+   model:"Es una compañera de trabajo."},
+  {cat:"presentar", pts:1, label:"Und jetzt du selbst: Sag, wie du heißt und woher du kommst.", ph:"Me llamo … Soy de …",
+   check:t=>{const s=t.replace(/[¡!¿?.,]/g,""); return /me llamo\s+\S+/.test(s) && /soy de\s+\S+/.test(s);},
+   tip:"Wie in Stunde 1: <b>Me llamo … Soy de …</b> – der Wechsel von Tarek zu dir!",
+   model:"Me llamo Alex. Soy de Colonia."}
+];
+
+const NOTEN = ["6","5−","5","5+","4−","4","4+","3−","3","3+","2−","2","2+","1−","1","1+"];
+const TOTAL_STEPS = L1.length + L2.length + L3.length;
+
+/* ===== Zustand ===== */
+let score = 0, step = 0;
+const catStats = {articulo:{ok:0,all:0}, presentar:{ok:0,all:0}, repaso:{ok:0,all:0}};
+const stage = document.getElementById("stage");
+const bar = document.getElementById("bar");
+const scoreChip = document.getElementById("scoreChip");
+const levelChip = document.getElementById("levelChip");
+
+function setScore(pts){ score += pts; scoreChip.textContent = score + " / 15"; }
+function setProgress(){ bar.style.width = (step / TOTAL_STEPS * 100) + "%"; }
+function norm(s){
+  return s.toLowerCase().normalize("NFD").replace(/[̀-̂̈]/g,"")
+          .replace(/\s+/g," ").trim();
+}
+
+/* ===== Screens ===== */
+function startScreen(){
+  levelChip.textContent = "👥";
+  stage.innerHTML = `
+    <div class="card hero">
+      <div class="emoji">👥</div>
+      <h1>Presentar<br>+ un/una</h1>
+      <p>Tarek, deine Freunde, dein eigenes Profil: Teste, ob du Personen vorstellen kannst – und ob un und una richtig sitzen.</p>
+      <div class="legend">
+        <div class="row"><span class="dot" style="background:var(--brown)"></span>un/una – der unbestimmte Artikel</div>
+        <div class="row"><span class="dot" style="background:var(--blue)"></span>Presentar – Él/Ella es …, es de …, habla …</div>
+        <div class="row"><span class="dot" style="background:var(--grey)"></span>Repaso – no, ser, -ar-Verben</div>
+      </div>
+      <p style="margin-top:12px; font-size:14.5px;">15 Punkte = Notenpunkte wie in der Oberstufe.<br>Dauer: ca. 10 Minuten.</p>
+      <button class="btn" id="go">Empezamos · Los geht's</button>
+    </div>`;
+  document.getElementById("go").onclick = ()=>{ runMC(L1, 0, "Level 1 · Erkennen", ()=>runMC(L2, 0, "Level 2 · Anwenden", ()=>runL3(0))); };
+}
+
+/* ---------- Level 1 & 2 ---------- */
+function runMC(list, i, levelName, nextFn){
+  if(i >= list.length) return nextFn();
+  levelChip.textContent = levelName;
+  const t = list[i], c = CATS[t.cat];
+  catStats[t.cat].all++;
+  const promptHtml = t.q !== undefined
+    ? t.q
+    : `${t.before}<span class="gap" id="gap">___</span>${t.after}`;
+  const short = t.opts.every(o=>o.length <= 4);
+  stage.innerHTML = `
+    <div class="card">
+      <span class="task-cat ${c.cls}">${c.label}</span>
+      <div class="prompt">${promptHtml}</div>
+      <div class="options ${short ? "rowed" : ""}">${t.opts.map((o,k)=>`<button class="opt" data-k="${k}">${o}</button>`).join("")}</div>
+      <div class="feedback" id="fb"></div>
+      <button class="btn hidden" id="next">Weiter</button>
+    </div>`;
+  const fb = document.getElementById("fb"), next = document.getElementById("next"), gap = document.getElementById("gap");
+  stage.querySelectorAll(".opt").forEach(btn=>{
+    btn.onclick = ()=>{
+      const k = +btn.dataset.k;
+      stage.querySelectorAll(".opt").forEach(b=>{ b.disabled = true; if(+b.dataset.k!==t.ok && b!==btn) b.classList.add("dim"); });
+      if(gap) gap.textContent = t.opts[t.ok];
+      if(k === t.ok){
+        btn.classList.add("correct"); setScore(1); catStats[t.cat].ok++;
+        fb.className = "feedback show good"; fb.innerHTML = "✓ ¡Muy bien! +1 Punkt";
+      }else{
+        btn.classList.add("wrong");
+        stage.querySelector(`.opt[data-k="${t.ok}"]`).classList.add("correct");
+        fb.className = "feedback show bad"; fb.innerHTML = t.why;
+      }
+      step++; setProgress(); next.classList.remove("hidden");
+    };
+  });
+  next.onclick = ()=> runMC(list, i+1, levelName, nextFn);
+}
+
+/* ---------- Level 3 ---------- */
+function runL3(i){
+  if(i >= L3.length) return endScreen();
+  levelChip.textContent = "Level 3 · Schreiben";
+  const t = L3[i], c = CATS[t.cat];
+  catStats[t.cat].all++;
+  let attempt = 1;
+  stage.innerHTML = `
+    <div class="card">
+      <span class="task-cat ${c.cls}">${c.label}</span>
+      <h2>Jetzt du! ✍️</h2>
+      <p class="write-label" style="margin-top:10px">${t.label}</p>
+      <input type="text" id="inp" placeholder="${t.ph}" autocomplete="off" autocapitalize="sentences" enterkeyhint="done">
+      <p class="hint">Tipp: Groß-/Kleinschreibung, Akzente und ¿ ¡ sind egal.</p>
+      <div class="feedback" id="fb"></div>
+      <button class="btn" id="check">Prüfen</button>
+      <button class="btn secondary hidden" id="next">Weiter</button>
+    </div>`;
+  const inp = document.getElementById("inp"), fb = document.getElementById("fb");
+  const check = document.getElementById("check"), next = document.getElementById("next");
+  inp.focus();
+  inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); check.click(); } });
+
+  check.onclick = ()=>{
+    const val = norm(inp.value);
+    if(!val){ fb.className="feedback show bad"; fb.innerHTML = "Schreib zuerst deinen Satz. 🙂"; return; }
+    const special = t.special ? t.special(val) : null;
+    if(t.check(val)){
+      const pts = attempt===1 ? t.pts : 1;
+      setScore(pts); catStats[t.cat].ok++;
+      fb.className="feedback show good";
+      fb.innerHTML = "✓ ¡Genial! +" + pts + (pts===1?" Punkt":" Punkte") + " – so stellt man Personen vor.";
+      check.classList.add("hidden"); inp.disabled = true;
+      step++; setProgress(); next.classList.remove("hidden");
+    }else if(attempt === 1){
+      attempt = 2;
+      fb.className="feedback show bad";
+      fb.innerHTML = (special || t.tip) + "<br>Versuch es noch einmal – dann gibt es 1 Punkt.";
+    }else{
+      fb.className="feedback show bad";
+      fb.innerHTML = "So geht es: <b>" + t.model + "</b> – das üben wir weiter.";
+      check.classList.add("hidden"); inp.disabled = true;
+      step++; setProgress(); next.classList.remove("hidden");
+    }
+  };
+  next.onclick = ()=> runL3(i+1);
+}
+
+/* ---------- Endauswertung ---------- */
+function endScreen(){
+  levelChip.textContent = "Ergebnis";
+  bar.style.width = "100%";
+  const note = NOTEN[score];
+  const rows = Object.keys(CATS).map(key=>{
+    const s = catStats[key], good = s.all === 0 || s.ok >= Math.ceil(s.all * 0.75);
+    return `<div class="skill">
+      <span><span class="dot" style="background:${CATS[key].dot}; display:inline-block; vertical-align:-1px; margin-right:8px;"></span>${CATS[key].de}</span>
+      <span class="tag ${good?'can':'train'}">${good ? "kannst du ✓" : "noch üben"}</span>
+    </div>`;
+  }).join("");
+  stage.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <p style="font-size:15px; font-weight:700; color:var(--ink2);">Deine Notenpunkte heute</p>
+      <div class="result-note">${score} <span style="font-size:26px; color:var(--ink2); font-weight:700;">/ 15</span></div>
+      <p class="result-pts">entspricht der Note <b style="color:var(--ink)">${note}</b></p>
+      <div class="skills" style="text-align:left;">${rows}</div>
+      <p style="margin-top:16px; font-size:14.5px;">📸 Mach einen Screenshot für die Hausaufgabe.</p>
+      <button class="btn" id="again">Noch einmal spielen</button>
+    </div>`;
+  document.getElementById("again").onclick = ()=>{
+    score = 0; step = 0;
+    for(const k in catStats){ catStats[k].ok = 0; catStats[k].all = 0; }
+    scoreChip.textContent = "0 / 15"; bar.style.width = "0%";
+    startScreen();
+  };
+}
+
+startScreen();
+</script>
+</body>
+</html>
