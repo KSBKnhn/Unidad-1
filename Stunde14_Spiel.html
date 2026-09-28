@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>¿Estoy listo/-a? – Diagnose-Quiz Stunde 14</title>
+<style>
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#1D1D1F; --ink2:#6E6E73;
+    --blue:#0A84FF; --green:#30D158; --green-ink:#1FA046; --grey:#8E8E93;
+    --yellow:#FFD60A; --yellow-ink:#B08A00; --yellow-soft:#FFF7D6;
+    --purple:#BF5AF2; --purple-ink:#8E2DBF; --purple-soft:#F7EDFC;
+    --brown:#A2845E; --brown-ink:#7A5C36; --brown-soft:#F2EBE3;
+    --green-soft:#EAFBEF; --orange-soft:#FFF4E2; --grey-soft:#EFEFF1; --ink-soft:#E9E9EC;
+    --ok:#30D158; --err:#FF453A; --radius:20px;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:var(--bg); color:var(--ink);
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(12px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  }
+  .app{width:100%; max-width:440px; display:flex; flex-direction:column; gap:14px; flex:1;}
+
+  header{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 2px;}
+  .level-chip{font-size:13px; font-weight:600; color:var(--ink2); background:var(--card);
+    border-radius:999px; padding:7px 13px; box-shadow:var(--shadow);}
+  .score-chip{font-size:15px; font-weight:700; background:var(--ink); color:#fff;
+    border-radius:999px; padding:7px 15px; font-variant-numeric:tabular-nums;}
+  .progress{width:100%; height:6px; background:#E4E4E8; border-radius:999px; overflow:hidden;}
+  .progress > div{height:100%; width:0%; background:var(--ink); border-radius:999px; transition:width .4s cubic-bezier(.4,0,.2,1);}
+
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 22px;
+    animation:pop .35s cubic-bezier(.2,.8,.3,1);}
+  @keyframes pop{from{opacity:0; transform:translateY(10px) scale(.985);} to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion: reduce){ .card{animation:none;} .progress > div{transition:none;} }
+
+  h1{font-size:31px; line-height:1.15; margin:0 0 8px; font-weight:800; letter-spacing:-.02em;}
+  h2{font-size:21px; line-height:1.3; margin:0 0 6px; font-weight:700; letter-spacing:-.01em;}
+  p{margin:0; color:var(--ink2); font-size:16px; line-height:1.5;}
+  .task-cat{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700;
+    border-radius:999px; padding:6px 12px; margin-bottom:14px;}
+  .cat-ser{background:var(--green-soft); color:var(--green-ink);}
+  .cat-verbos{background:var(--yellow-soft); color:var(--yellow-ink);}
+  .cat-negacion{background:var(--ink-soft); color:var(--ink);}
+  .cat-plural{background:var(--brown-soft); color:var(--brown-ink);}
+  .cat-preguntas{background:var(--purple-soft); color:var(--purple-ink);}
+  .prompt{font-size:22px; font-weight:700; line-height:1.35; margin-bottom:18px; color:var(--ink);}
+  .prompt .gap{display:inline-block; min-width:56px; border-bottom:2.5px dashed #C7C7CC; text-align:center; color:var(--ink); font-weight:800;}
+
+  .options{display:flex; flex-direction:column; gap:10px;}
+  .opt{
+    width:100%; min-height:56px; border:none; border-radius:16px; background:#F2F2F5;
+    font:inherit; font-size:18px; font-weight:600; color:var(--ink); padding:15px 18px;
+    text-align:left; cursor:pointer; transition:transform .12s ease, background .15s ease;
+  }
+  .opt:active{transform:scale(.975);}
+  .opt.correct{background:var(--ok); color:#fff;}
+  .opt.wrong{background:var(--err); color:#fff;}
+  .opt:disabled{cursor:default; opacity:1;}
+  .opt.dim{opacity:.45;}
+
+  .feedback{margin-top:14px; border-radius:14px; padding:13px 15px; font-size:15px; line-height:1.45;
+    display:none; animation:pop .3s ease;}
+  .feedback.show{display:block;}
+  .feedback.good{background:var(--green-soft); color:#157A38;}
+  .feedback.bad{background:#FFECEB; color:#C22C22;}
+
+  .btn{
+    width:100%; min-height:54px; border:none; border-radius:16px; background:var(--ink); color:#fff;
+    font:inherit; font-size:18px; font-weight:700; cursor:pointer; padding:15px;
+    transition:transform .12s ease, opacity .15s ease; margin-top:16px;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.hidden{display:none;}
+  .btn.secondary{background:#E9E9EC; color:var(--ink);}
+
+  .write-label{font-size:15px; font-weight:700; margin:0 0 8px;}
+  input[type=text]{
+    width:100%; min-height:54px; font:inherit; font-size:18px; padding:14px 16px;
+    border:2px solid #E4E4E8; border-radius:16px; background:#FAFAFC; color:var(--ink); outline:none;
+    transition:border-color .15s ease;
+  }
+  input[type=text]:focus{border-color:var(--ink); background:#fff;}
+  .hint{font-size:14px; color:var(--ink2); margin-top:8px;}
+
+  .hero .emoji{font-size:52px; line-height:1; margin-bottom:12px;}
+  .legend{display:flex; flex-direction:column; gap:9px; margin:18px 0 4px;}
+  .legend .row{display:flex; align-items:center; gap:10px; font-size:16px; font-weight:600;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none;}
+  .result-note{font-size:56px; font-weight:800; letter-spacing:-.03em; margin:6px 0 2px;}
+  .result-pts{font-size:17px; color:var(--ink2); font-weight:600;}
+  .skills{display:flex; flex-direction:column; gap:10px; margin-top:18px;}
+  .skill{display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:#F7F7F9; border-radius:14px; padding:13px 15px; font-size:15px; font-weight:600; text-align:left;}
+  .skill .tag{font-size:13px; font-weight:700; border-radius:999px; padding:5px 11px; flex:none;}
+  .tag.can{background:var(--green-soft); color:#157A38;}
+  .tag.mid{background:var(--yellow-soft); color:var(--yellow-ink);}
+  .tag.train{background:#FFECEB; color:#C22C22;}
+  footer{margin-top:auto; padding-top:14px; font-size:12.5px; color:#A0A0A6; text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="level-chip" id="levelChip">🚦</span>
+    <span class="score-chip" id="scoreChip">0 / 15</span>
+  </header>
+  <div class="progress"><div id="bar"></div></div>
+  <main id="stage"></main>
+  <footer>Unidad 1 · Stunde 14 · A_tope.com · Diagnose vor der Klausur 🚦</footer>
+</div>
+
+<script>
+"use strict";
+/* ===== Diagnose-Quiz über alle Klausurkompetenzen – nur neue Items ===== */
+
+const CATS = {
+  ser:       {cls:"cat-ser",       dot:"var(--green)",  label:"⭐ ser",        de:"ser (Klausur 2.1 · 12 P)", tipp:"ser-Tabelle + Warm-up"},
+  verbos:    {cls:"cat-verbos",    dot:"var(--yellow)", label:"⚙️ Verbos",     de:"Verben -ar/-er/-ir (2.2 · 16,5 P)", tipp:"System-Tabelle Stunde 11"},
+  negacion:  {cls:"cat-negacion",  dot:"var(--ink)",    label:"⛔ Negación",   de:"Verneinung (2.4 · 5 P)", tipp:"no vor das Verb"},
+  plural:    {cls:"cat-plural",    dot:"var(--brown)",  label:"🤎 Plural",     de:"Artikel & Plural (2.5 · 5 P)", tipp:"alles wandert mit"},
+  preguntas: {cls:"cat-preguntas", dot:"var(--purple)", label:"💜 Preguntas",  de:"Fragewörter (2.6 · 5 P)", tipp:"Antwort-Detektiv"}
+};
+
+/* Level 1 – Erkennen (je 1 Punkt) */
+const L1 = [
+  {cat:"ser", q:"vosotros + ser – welche Form?", opts:["sois","son","somos"], ok:0,
+   why:"vosotros → <b>sois</b>. · ¿Vosotros sois de aquí?"},
+  {cat:"verbos", q:"«leemos» – wer ist gemeint?", opts:["ellos/-as","nosotros/-as","vosotros/-as"], ok:1,
+   why:"-er → <b>-emos</b> = wir: le<b>emos</b>."},
+  {cat:"negacion", q:"Welcher Satz ist richtig verneint?", opts:["Paula charla no mucho.","No, Paula charla mucho.","Paula no charla mucho."], ok:2,
+   why:"Stoppschild direkt VOR das Verb: Paula <b>no charla</b> mucho."},
+  {cat:"plural", q:"Plural von «el móvil»?", opts:["los móviles","los móvils","las móviles"], ok:0,
+   why:"el → los + Konsonant-Regel: los móvil<b>es</b>."},
+  {cat:"preguntas", q:"– ¿___ es el examen de Español?<br>– Es mañana.", opts:["Dónde","Cuándo","Quién"], ok:1,
+   why:"Zeit in der Antwort (mañana) → <b>¿Cuándo?</b>"}
+];
+
+/* Level 2 – Anwenden (je 1 Punkt) */
+const L2 = [
+  {cat:"verbos", before:"¿Vosotros ", after:" el mensaje? (recibir)", opts:["recibéis","recibimos","recibís"], ok:2,
+   why:"-ir → vosotros = <b>-ís</b>: recib<b>ís</b>. („recibéis“ wäre -er!)"},
+  {cat:"ser", before:"Mis padres no ", after:" de aquí. (ser)", opts:["son","es","sois"], ok:0,
+   why:"mis padres = ellos → <b>son</b>. Verneinung ändert die Form nicht!"},
+  {cat:"plural", q:"«La compañera aprende la lengua.»<br>Richtig im Plural:", opts:["Las compañeras aprende las lenguas.","Las compañeras aprenden las lenguas.","Las compañera aprenden la lengua."], ok:1,
+   why:"Artikel + Substantiv + <b>Verb</b> – alles wandert: aprend<b>en</b>."},
+  {cat:"preguntas", before:"– ¿", after:" trabajáis? &nbsp;– En un supermercado.", opts:["De dónde","Dónde","Qué"], ok:1,
+   why:"Ort in der Antwort → <b>¿Dónde?</b> (De dónde = Herkunft!)"},
+  {cat:"verbos", before:"Yo ", after:" un e-mail a mi amiga. (escribir)", opts:["escribo","escribe","escribes"], ok:0,
+   why:"yo → immer <b>-o</b>: escrib<b>o</b>."}
+];
+
+/* Level 3 – Schreiben wie in der Klausur (2 + 2 + 1 Punkte) */
+const L3 = [
+  {cat:"negacion", pts:2, label:"– ¿Vives cerca? – Antworte mit Nein (ganzer Satz).", ph:"No, …",
+   check:t=>/^no,? no vivo cerca\b/.test(t.replace(/[¡!¿?.]/g,"").trim()),
+   special:t=>{const s=t.replace(/[¡!¿?.]/g,"").trim(); return /^no vivo cerca\b/.test(s) ? "Gut verneint! Es fehlt nur das erste <b>No</b> (= „Nein“): <b>No, no vivo …</b>" : (/vivo no/.test(s) ? "Das <b>no</b> steht VOR dem Verb." : null);},
+   tip:"Zweimal no: <b>No, no vivo cerca.</b>",
+   model:"No, no vivo cerca."},
+  {cat:"plural", pts:2, label:"Setze den ganzen Satz in den Plural:<br>«El vecino escribe el mensaje.»", ph:"Los …",
+   check:t=>/los vecinos escriben los mensajes/.test(t.replace(/[¡!¿?.,«»]/g,"")),
+   special:t=>{const s=t.replace(/[¡!¿?.,«»]/g,""); if(/los vecinos escribe /.test(s)) return "Fast! Auch das VERB in den Plural: escrib<b>en</b>."; if(/el mensaje\b/.test(s) && /los vecinos escriben/.test(s)) return "Fast! Auch das Objekt wandert: <b>los mensajes</b>."; return null;},
+   tip:"Alles anpassen: <b>Los vecinos escriben los mensajes.</b>",
+   model:"Los vecinos escriben los mensajes."},
+  {cat:"preguntas", pts:1, label:"Im Klausur-Schreibteil brauchst du 2 Fragen. Schreib EINE Frage an deinen Austauschpartner mit ¿dónde?", ph:"¿Dónde …?",
+   check:t=>/(^|\s)donde (vives|estudias|trabajas|quedas|comes|compras)/.test(t.replace(/[¡!¿?.,]/g,"")),
+   tip:"Zum Beispiel: <b>¿Dónde vives?</b> · ¿Dónde estudias? · ¿Dónde quedas con los amigos?",
+   model:"¿Dónde vives?"}
+];
+
+const NOTEN = ["6","5−","5","5+","4−","4","4+","3−","3","3+","2−","2","2+","1−","1","1+"];
+const TOTAL_STEPS = L1.length + L2.length + L3.length;
+
+/* ===== Zustand ===== */
+let score = 0, step = 0;
+const catStats = {ser:{ok:0,all:0}, verbos:{ok:0,all:0}, negacion:{ok:0,all:0}, plural:{ok:0,all:0}, preguntas:{ok:0,all:0}};
+const stage = document.getElementById("stage");
+const bar = document.getElementById("bar");
+const scoreChip = document.getElementById("scoreChip");
+const levelChip = document.getElementById("levelChip");
+
+function setScore(pts){ score += pts; scoreChip.textContent = score + " / 15"; }
+function setProgress(){ bar.style.width = (step / TOTAL_STEPS * 100) + "%"; }
+function norm(s){
+  return s.toLowerCase().normalize("NFD").replace(/[̀-̂̈]/g,"")
+          .replace(/\s+/g," ").trim();
+}
+
+/* ===== Screens ===== */
+function startScreen(){
+  levelChip.textContent = "🚦";
+  stage.innerHTML = `
+    <div class="card hero">
+      <div class="emoji">🚦</div>
+      <h1>¿Estoy<br>listo/-a?</h1>
+      <p>Der letzte Check vor der Klausur: 13 Aufgaben quer durch alle fünf Grammatik-Kompetenzen. Am Ende zeigt dir die Ampel, was sitzt – und was du heute Abend noch übst.</p>
+      <div class="legend">
+        <div class="row"><span class="dot" style="background:var(--green)"></span>ser · <span class="dot" style="background:var(--yellow)"></span>Verben · <span class="dot" style="background:var(--ink)"></span>Verneinung</div>
+        <div class="row"><span class="dot" style="background:var(--brown)"></span>Plural · <span class="dot" style="background:var(--purple)"></span>Fragewörter</div>
+      </div>
+      <p style="margin-top:12px; font-size:14.5px;">15 Punkte = Notenpunkte wie in der Oberstufe.<br>Mehrmals spielen ausdrücklich erwünscht! 💪</p>
+      <button class="btn" id="go">Empezamos · Los geht's</button>
+    </div>`;
+  document.getElementById("go").onclick = ()=>{ runMC(L1, 0, "Check 1 · Erkennen", ()=>runMC(L2, 0, "Check 2 · Anwenden", ()=>runL3(0))); };
+}
+
+/* ---------- Level 1 & 2 ---------- */
+function runMC(list, i, levelName, nextFn){
+  if(i >= list.length) return nextFn();
+  levelChip.textContent = levelName;
+  const t = list[i], c = CATS[t.cat];
+  catStats[t.cat].all++;
+  const promptHtml = t.q !== undefined
+    ? t.q
+    : `${t.before}<span class="gap" id="gap">___</span>${t.after}`;
+  stage.innerHTML = `
+    <div class="card">
+      <span class="task-cat ${c.cls}">${c.label}</span>
+      <div class="prompt">${promptHtml}</div>
+      <div class="options">${t.opts.map((o,k)=>`<button class="opt" data-k="${k}">${o}</button>`).join("")}</div>
+      <div class="feedback" id="fb"></div>
+      <button class="btn hidden" id="next">Weiter</button>
+    </div>`;
+  const fb = document.getElementById("fb"), next = document.getElementById("next"), gap = document.getElementById("gap");
+  stage.querySelectorAll(".opt").forEach(btn=>{
+    btn.onclick = ()=>{
+      const k = +btn.dataset.k;
+      stage.querySelectorAll(".opt").forEach(b=>{ b.disabled = true; if(+b.dataset.k!==t.ok && b!==btn) b.classList.add("dim"); });
+      if(gap) gap.textContent = t.opts[t.ok];
+      if(k === t.ok){
+        btn.classList.add("correct"); setScore(1); catStats[t.cat].ok++;
+        fb.className = "feedback show good"; fb.innerHTML = "✓ ¡Muy bien! +1 Punkt";
+      }else{
+        btn.classList.add("wrong");
+        stage.querySelector(`.opt[data-k="${t.ok}"]`).classList.add("correct");
+        fb.className = "feedback show bad"; fb.innerHTML = t.why;
+      }
+      step++; setProgress(); next.classList.remove("hidden");
+    };
+  });
+  next.onclick = ()=> runMC(list, i+1, levelName, nextFn);
+}
+
+/* ---------- Level 3 ---------- */
+function runL3(i){
+  if(i >= L3.length) return endScreen();
+  levelChip.textContent = "Check 3 · Schreiben";
+  const t = L3[i], c = CATS[t.cat];
+  catStats[t.cat].all++;
+  let attempt = 1;
+  stage.innerHTML = `
+    <div class="card">
+      <span class="task-cat ${c.cls}">${c.label}</span>
+      <h2>Wie in der Klausur ✍️</h2>
+      <p class="write-label" style="margin-top:10px">${t.label}</p>
+      <input type="text" id="inp" placeholder="${t.ph}" autocomplete="off" autocapitalize="sentences" enterkeyhint="done">
+      <p class="hint">Tipp: Groß-/Kleinschreibung, Akzente und ¿ ¡ sind egal.</p>
+      <div class="feedback" id="fb"></div>
+      <button class="btn" id="check">Prüfen</button>
+      <button class="btn secondary hidden" id="next">Weiter</button>
+    </div>`;
+  const inp = document.getElementById("inp"), fb = document.getElementById("fb");
+  const check = document.getElementById("check"), next = document.getElementById("next");
+  inp.focus();
+  inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); check.click(); } });
+
+  check.onclick = ()=>{
+    const val = norm(inp.value);
+    if(!val){ fb.className="feedback show bad"; fb.innerHTML = "Schreib zuerst deinen Satz. 🙂"; return; }
+    const special = t.special ? t.special(val) : null;
+    if(t.check(val)){
+      const pts = attempt===1 ? t.pts : 1;
+      setScore(pts); catStats[t.cat].ok++;
+      fb.className="feedback show good";
+      fb.innerHTML = "✓ ¡Genial! +" + pts + (pts===1?" Punkt":" Punkte") + " – klausurreif.";
+      check.classList.add("hidden"); inp.disabled = true;
+      step++; setProgress(); next.classList.remove("hidden");
+    }else if(attempt === 1){
+      attempt = 2;
+      fb.className="feedback show bad";
+      fb.innerHTML = (special || t.tip) + "<br>Versuch es noch einmal – dann gibt es 1 Punkt.";
+    }else{
+      fb.className="feedback show bad";
+      fb.innerHTML = "So geht es: <b>" + t.model + "</b> – ab auf die Lernliste!";
+      check.classList.add("hidden"); inp.disabled = true;
+      step++; setProgress(); next.classList.remove("hidden");
+    }
+  };
+  next.onclick = ()=> runL3(i+1);
+}
+
+/* ---------- Ampel-Endauswertung ---------- */
+function endScreen(){
+  levelChip.textContent = "Diagnose";
+  bar.style.width = "100%";
+  const note = NOTEN[score];
+  const rows = Object.keys(CATS).map(key=>{
+    const s = catStats[key];
+    const ratio = s.all === 0 ? 1 : s.ok / s.all;
+    let cls = "train", txt = "🔴 heute üben!", extra = " → " + CATS[key].tipp;
+    if(ratio >= 0.99){ cls = "can"; txt = "🟢 sitzt!"; extra = ""; }
+    else if(ratio >= 0.5){ cls = "mid"; txt = "🟡 fast"; }
+    return `<div class="skill">
+      <span><span class="dot" style="background:${CATS[key].dot}; display:inline-block; vertical-align:-1px; margin-right:8px;"></span>${CATS[key].de}${cls!=="can" ? `<br><span style="font-size:12.5px; color:var(--ink2);">${extra.replace(" → ","Tipp: ")}</span>` : ""}</span>
+      <span class="tag ${cls}">${txt}</span>
+    </div>`;
+  }).join("");
+  stage.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <p style="font-size:15px; font-weight:700; color:var(--ink2);">Deine Diagnose vor der Klausur</p>
+      <div class="result-note">${score} <span style="font-size:26px; color:var(--ink2); font-weight:700;">/ 15</span></div>
+      <p class="result-pts">entspricht der Note <b style="color:var(--ink)">${note}</b></p>
+      <div class="skills">${rows}</div>
+      <p style="margin-top:16px; font-size:14.5px;">🔴 und 🟡 kommen auf deine Lernliste.<br>Dann noch einmal spielen – bis alles 🟢 ist. ¡Mucha suerte! 🍀</p>
+      <button class="btn" id="again">Noch einmal spielen</button>
+    </div>`;
+  document.getElementById("again").onclick = ()=>{
+    score = 0; step = 0;
+    for(const k in catStats){ catStats[k].ok = 0; catStats[k].all = 0; }
+    scoreChip.textContent = "0 / 15"; bar.style.width = "0%";
+    startScreen();
+  };
+}
+
+startScreen();
+</script>
+</body>
+</html>
