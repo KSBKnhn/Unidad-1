@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Verbos -er / -ir – Lernspiel Stunde 11</title>
+<style>
+  :root{
+    --bg:#F5F5F7; --card:#FFFFFF; --ink:#1D1D1F; --ink2:#6E6E73;
+    --blue:#0A84FF; --green:#30D158; --grey:#8E8E93;
+    --yellow:#FFD60A; --yellow-ink:#B08A00; --yellow-soft:#FFF7D6;
+    --mint:#00C7BE; --mint-ink:#00807A; --mint-soft:#DDF7F5;
+    --teal:#30B0C7; --teal-ink:#1A7D91; --teal-soft:#E0F3F7;
+    --green-soft:#EAFBEF; --orange-soft:#FFF4E2; --grey-soft:#EFEFF1;
+    --ok:#30D158; --err:#FF453A; --radius:20px;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:var(--bg); color:var(--ink);
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(12px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  }
+  .app{width:100%; max-width:440px; display:flex; flex-direction:column; gap:14px; flex:1;}
+
+  header{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 2px;}
+  .level-chip{font-size:13px; font-weight:600; color:var(--ink2); background:var(--card);
+    border-radius:999px; padding:7px 13px; box-shadow:var(--shadow);}
+  .score-chip{font-size:15px; font-weight:700; background:var(--ink); color:#fff;
+    border-radius:999px; padding:7px 15px; font-variant-numeric:tabular-nums;}
+  .progress{width:100%; height:6px; background:#E4E4E8; border-radius:999px; overflow:hidden;}
+  .progress > div{height:100%; width:0%; background:var(--ink); border-radius:999px; transition:width .4s cubic-bezier(.4,0,.2,1);}
+
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 22px;
+    animation:pop .35s cubic-bezier(.2,.8,.3,1);}
+  @keyframes pop{from{opacity:0; transform:translateY(10px) scale(.985);} to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion: reduce){ .card{animation:none;} .progress > div{transition:none;} }
+
+  h1{font-size:31px; line-height:1.15; margin:0 0 8px; font-weight:800; letter-spacing:-.02em;}
+  h2{font-size:21px; line-height:1.3; margin:0 0 6px; font-weight:700; letter-spacing:-.01em;}
+  p{margin:0; color:var(--ink2); font-size:16px; line-height:1.5;}
+  .task-cat{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700;
+    border-radius:999px; padding:6px 12px; margin-bottom:14px;}
+  .cat-erir{background:var(--mint-soft); color:var(--mint-ink);}
+  .cat-mix{background:var(--yellow-soft); color:var(--yellow-ink);}
+  .cat-repaso{background:var(--grey-soft); color:#5E5E63;}
+  .prompt{font-size:22px; font-weight:700; line-height:1.35; margin-bottom:18px; color:var(--ink);}
+  .prompt .gap{display:inline-block; min-width:56px; border-bottom:2.5px dashed #C7C7CC; text-align:center; color:var(--mint-ink); font-weight:800;}
+
+  .options{display:flex; flex-direction:column; gap:10px;}
+  .opt{
+    width:100%; min-height:56px; border:none; border-radius:16px; background:#F2F2F5;
+    font:inherit; font-size:18px; font-weight:600; color:var(--ink); padding:15px 18px;
+    text-align:left; cursor:pointer; transition:transform .12s ease, background .15s ease;
+  }
+  .opt:active{transform:scale(.975);}
+  .opt.correct{background:var(--ok); color:#fff;}
+  .opt.wrong{background:var(--err); color:#fff;}
+  .opt:disabled{cursor:default; opacity:1;}
+  .opt.dim{opacity:.45;}
+
+  .feedback{margin-top:14px; border-radius:14px; padding:13px 15px; font-size:15px; line-height:1.45;
+    display:none; animation:pop .3s ease;}
+  .feedback.show{display:block;}
+  .feedback.good{background:var(--green-soft); color:#157A38;}
+  .feedback.bad{background:#FFECEB; color:#C22C22;}
+
+  .btn{
+    width:100%; min-height:54px; border:none; border-radius:16px; background:var(--ink); color:#fff;
+    font:inherit; font-size:18px; font-weight:700; cursor:pointer; padding:15px;
+    transition:transform .12s ease, opacity .15s ease; margin-top:16px;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.hidden{display:none;}
+  .btn.secondary{background:#E9E9EC; color:var(--ink);}
+
+  .write-label{font-size:15px; font-weight:700; margin:0 0 8px;}
+  input[type=text]{
+    width:100%; min-height:54px; font:inherit; font-size:18px; padding:14px 16px;
+    border:2px solid #E4E4E8; border-radius:16px; background:#FAFAFC; color:var(--ink); outline:none;
+    transition:border-color .15s ease;
+  }
+  input[type=text]:focus{border-color:var(--mint); background:#fff;}
+  .hint{font-size:14px; color:var(--ink2); margin-top:8px;}
+
+  .hero .emoji{font-size:52px; line-height:1; margin-bottom:12px;}
+  .legend{display:flex; flex-direction:column; gap:9px; margin:18px 0 4px;}
+  .legend .row{display:flex; align-items:center; gap:10px; font-size:16px; font-weight:600;}
+  .dot{width:14px; height:14px; border-radius:50%; flex:none;}
+  .result-note{font-size:56px; font-weight:800; letter-spacing:-.03em; margin:6px 0 2px;}
+  .result-pts{font-size:17px; color:var(--ink2); font-weight:600;}
+  .skills{display:flex; flex-direction:column; gap:10px; margin-top:18px;}
+  .skill{display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:#F7F7F9; border-radius:14px; padding:13px 15px; font-size:15.5px; font-weight:600;}
+  .skill .tag{font-size:13px; font-weight:700; border-radius:999px; padding:5px 11px; flex:none;}
+  .tag.can{background:var(--green-soft); color:#157A38;}
+  .tag.train{background:var(--orange-soft); color:#C77700;}
+  footer{margin-top:auto; padding-top:14px; font-size:12.5px; color:#A0A0A6; text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="level-chip" id="levelChip">⚙️⚙️</span>
+    <span class="score-chip" id="scoreChip">0 / 15</span>
+  </header>
+  <div class="progress"><div id="bar"></div></div>
+  <main id="stage"></main>
+  <footer>Unidad 1 · Stunde 11 · A_tope.com · 🌊 -er/-ir 🟡 Mix ⚪ Repaso</footer>
+</div>
+
+<script>
+"use strict";
+/* ===== Daten – -er/-ir-Verben + Mix aller Klassen (Stoff der Stunden 1–11) ===== */
+
+const CATS = {
+  erir:   {cls:"cat-erir",   dot:"var(--mint)",   label:"🌊 -er / -ir",  de:"Die neuen Endungen bilden"},
+  mix:    {cls:"cat-mix",    dot:"var(--yellow)", label:"🔀 Mix",        de:"Alle drei Klassen mischen (Klausur 2.2)"},
+  repaso: {cls:"cat-repaso", dot:"var(--grey)",   label:"🔁 Repaso",     de:"Wiederholung Stunde 1–10"}
+};
+
+/* Level 1 – Wiedererkennen (je 1 Punkt) */
+const L1 = [
+  {cat:"erir", q:"Welche Form passt zu yo?<br>(comprender)", opts:["comprende","comprendo","comprendes"], ok:1,
+   why:"yo endet in ALLEN Verbklassen auf <b>-o</b>: comprend<b>o</b>."},
+  {cat:"erir", q:"«vivís» – wer ist gemeint?", opts:["vosotros/-as","nosotros/-as","ellos/-as"], ok:0,
+   why:"-ir → vosotros = <b>-ís</b>: viv<b>ís</b>. (nosotros wäre viv<b>imos</b>)"},
+  {cat:"erir", q:"Welches Verb gehört zur -ir-Familie?", opts:["comprender","escribir","leer"], ok:1,
+   why:"<b>escribir</b> endet auf -ir. comprender und leer sind -er-Verben."},
+  {cat:"mix", q:"Welche Form passt zu ellos?<br>(leer)", opts:["leen","lean","leemos"], ok:0,
+   why:"-er → ellos = <b>-en</b>: le<b>en</b>. «Primero leen los textos …»"},
+  {cat:"repaso", q:"Verneine: «Comprendo el texto.»", opts:["Comprendo no el texto.","No comprendo el texto.","No, comprendo el texto."], ok:1,
+   why:"Stoppschild vor das Verb: <b>No comprendo</b> el texto. ⛔ – aus Stunde 8."}
+];
+
+/* Level 2 – Anwenden: Lücken (je 1 Punkt) */
+const L2 = [
+  {cat:"erir", before:"Alejandro ", after:" un mensaje. (escribir)", opts:["escribo","escribes","escribe"], ok:2,
+   why:"él → <b>-e</b>: escrib<b>e</b> – wie in Texto B."},
+  {cat:"erir", before:"Marta y yo ", after:" cerca. (vivir)", opts:["vivimos","vivemos","viven"], ok:0,
+   why:"-ir → nosotros = <b>-imos</b>: viv<b>imos</b>. Vorsicht: „vivemos“ gibt es nicht – das e gehört zu -er!"},
+  {cat:"erir", before:"¿Vosotros ", after:" los textos? (comprender)", opts:["comprendís","comprendéis","comprendemos"], ok:1,
+   why:"-er → vosotros = <b>-éis</b>: comprend<b>éis</b>. („comprendís“ wäre die -ir-Endung!)"},
+  {cat:"mix", before:"Yo ", after:" mucho en inglés. (leer)", opts:["leo","lee","leas"], ok:0,
+   why:"yo → <b>-o</b>: le<b>o</b>. «Leo mucho en inglés. Así aprendo.»"},
+  {cat:"mix", before:"Lucía y Manuel ", after:" el examen juntos. (preparar)", opts:["preparan","preparen","prepara"], ok:0,
+   why:"-ar → ellos = <b>-an</b>: prepar<b>an</b>. Im Mix immer zuerst schauen: Welche Klasse ist das Verb?"}
+];
+
+/* Level 3 – Produzieren: Formen tippen (2 + 2 + 1 Punkte) */
+const L3 = [
+  {cat:"erir", pts:2, label:"comprender – schreibe die Form für nosotros.", ph:"nosotros …",
+   check:t=>t.replace(/^nosotros\s+/,"").replace(/[.,!]/g,"").trim()==="comprendemos",
+   special:t=>/comprendimos/.test(t) ? "Fast! <b>-imos</b> ist die -ir-Endung. comprender ist -er → <b>-emos</b>." : null,
+   tip:"-er → nosotros: Stamm comprend- + <b>-emos</b>",
+   model:"comprendemos"},
+  {cat:"erir", pts:2, label:"Schreibe auf Spanisch: „Wir wohnen in Colonia.“ (vivir)", ph:"… en Colonia.",
+   check:t=>/(^|\s)vivimos en colonia/.test(t.replace(/[¡!¿?.,]/g,"")),
+   special:t=>{const s=t.replace(/[¡!¿?.,]/g,""); return /vivemos/.test(s) ? "Fast! -ir → nosotros = <b>-imos</b>: viv<b>imos</b> (nicht vivemos)." : (/(^|\s)viven en colonia/.test(s) ? "<b>viven</b> = sie wohnen. Wir → <b>vivimos</b>." : null);},
+   tip:"-ir → nosotros: <b>Vivimos en Colonia.</b>",
+   model:"Vivimos en Colonia."},
+  {cat:"mix", pts:1, label:"escribir – schreibe die Form für ellos.", ph:"ellos …",
+   check:t=>t.replace(/^ellos\s+/,"").replace(/[.,!]/g,"").trim()==="escriben",
+   tip:"-ir → ellos: Stamm escrib- + <b>-en</b>",
+   model:"escriben"}
+];
+
+const NOTEN = ["6","5−","5","5+","4−","4","4+","3−","3","3+","2−","2","2+","1−","1","1+"];
+const TOTAL_STEPS = L1.length + L2.length + L3.length;
+
+/* ===== Zustand ===== */
+let score = 0, step = 0;
+const catStats = {erir:{ok:0,all:0}, mix:{ok:0,all:0}, repaso:{ok:0,all:0}};
+const stage = document.getElementById("stage");
+const bar = document.getElementById("bar");
+const scoreChip = document.getElementById("scoreChip");
+const levelChip = document.getElementById("levelChip");
+
+function setScore(pts){ score += pts; scoreChip.textContent = score + " / 15"; }
+function setProgress(){ bar.style.width = (step / TOTAL_STEPS * 100) + "%"; }
+function norm(s){
+  return s.toLowerCase().normalize("NFD").replace(/[̀-̂̈]/g,"")
+          .replace(/\s+/g," ").trim();
+}
+
+/* ===== Screens ===== */
+function startScreen(){
+  levelChip.textContent = "⚙️⚙️";
+  stage.innerHTML = `
+    <div class="card hero">
+      <div class="emoji">⚙️⚙️</div>
+      <h1>Verbos en<br>-er y en -ir</h1>
+      <p>Die Zwillings-Verben: fast gleiche Endungen, Unterschied nur bei nosotros und vosotros. Damit ist dein Verb-Motor komplett – der größte Punkteblock der Klausur!</p>
+      <div class="legend">
+        <div class="row"><span class="dot" style="background:var(--mint)"></span>-er / -ir – o · es · e · emos/imos · éis/ís · en</div>
+        <div class="row"><span class="dot" style="background:var(--yellow)"></span>Mix – alle drei Klassen wie in Klausur 2.2</div>
+        <div class="row"><span class="dot" style="background:var(--grey)"></span>Repaso – Stunde 1 bis 10</div>
+      </div>
+      <p style="margin-top:12px; font-size:14.5px;">15 Punkte = Notenpunkte wie in der Oberstufe.<br>Dauer: ca. 10 Minuten.</p>
+      <button class="btn" id="go">Empezamos · Los geht's</button>
+    </div>`;
+  document.getElementById("go").onclick = ()=>{ runMC(L1, 0, "Level 1 · Erkennen", ()=>runMC(L2, 0, "Level 2 · Anwenden", ()=>runL3(0))); };
+}
+
+/* ---------- Level 1 & 2 ---------- */
+function runMC(list, i, levelName, nextFn){
+  if(i >= list.length) return nextFn();
+  levelChip.textContent = levelName;
+  const t = list[i], c = CATS[t.cat];
+  catStats[t.cat].all++;
+  const promptHtml = t.q !== undefined
+    ? t.q
+    : `${t.before}<span class="gap" id="gap">___</span>${t.after}`;
+  stage.innerHTML = `
+    <div class="card">
+      <span class="task-cat ${c.cls}">${c.label}</span>
+      <div class="prompt">${promptHtml}</div>
+      <div class="options">${t.opts.map((o,k)=>`<button class="opt" data-k="${k}">${o}</button>`).join("")}</div>
+      <div class="feedback" id="fb"></div>
+      <button class="btn hidden" id="next">Weiter</button>
+    </div>`;
+  const fb = document.getElementById("fb"), next = document.getElementById("next"), gap = document.getElementById("gap");
+  stage.querySelectorAll(".opt").forEach(btn=>{
+    btn.onclick = ()=>{
+      const k = +btn.dataset.k;
+      stage.querySelectorAll(".opt").forEach(b=>{ b.disabled = true; if(+b.dataset.k!==t.ok && b!==btn) b.classList.add("dim"); });
+      if(gap) gap.textContent = t.opts[t.ok];
+      if(k === t.ok){
+        btn.classList.add("correct"); setScore(1); catStats[t.cat].ok++;
+        fb.className = "feedback show good"; fb.innerHTML = "✓ ¡Muy bien! +1 Punkt";
+      }else{
+        btn.classList.add("wrong");
+        stage.querySelector(`.opt[data-k="${t.ok}"]`).classList.add("correct");
+        fb.className = "feedback show bad"; fb.innerHTML = t.why;
+      }
+      step++; setProgress(); next.classList.remove("hidden");
+    };
+  });
+  next.onclick = ()=> runMC(list, i+1, levelName, nextFn);
+}
+
+/* ---------- Level 3 ---------- */
+function runL3(i){
+  if(i >= L3.length) return endScreen();
+  levelChip.textContent = "Level 3 · Schreiben";
+  const t = L3[i], c = CATS[t.cat];
+  catStats[t.cat].all++;
+  let attempt = 1;
+  stage.innerHTML = `
+    <div class="card">
+      <span class="task-cat ${c.cls}">${c.label}</span>
+      <h2>Jetzt du! ✍️</h2>
+      <p class="write-label" style="margin-top:10px">${t.label}</p>
+      <input type="text" id="inp" placeholder="${t.ph}" autocomplete="off" autocapitalize="none" enterkeyhint="done">
+      <p class="hint">Tipp: Groß-/Kleinschreibung und Akzente sind egal.</p>
+      <div class="feedback" id="fb"></div>
+      <button class="btn" id="check">Prüfen</button>
+      <button class="btn secondary hidden" id="next">Weiter</button>
+    </div>`;
+  const inp = document.getElementById("inp"), fb = document.getElementById("fb");
+  const check = document.getElementById("check"), next = document.getElementById("next");
+  inp.focus();
+  inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); check.click(); } });
+
+  check.onclick = ()=>{
+    const val = norm(inp.value);
+    if(!val){ fb.className="feedback show bad"; fb.innerHTML = "Schreib zuerst deine Form. 🙂"; return; }
+    const special = t.special ? t.special(val) : null;
+    if(t.check(val)){
+      const pts = attempt===1 ? t.pts : 1;
+      setScore(pts); catStats[t.cat].ok++;
+      fb.className="feedback show good";
+      fb.innerHTML = "✓ ¡Genial! +" + pts + (pts===1?" Punkt":" Punkte") + " – die Endung sitzt.";
+      check.classList.add("hidden"); inp.disabled = true;
+      step++; setProgress(); next.classList.remove("hidden");
+    }else if(attempt === 1){
+      attempt = 2;
+      fb.className="feedback show bad";
+      fb.innerHTML = (special || t.tip) + "<br>Versuch es noch einmal – dann gibt es 1 Punkt.";
+    }else{
+      fb.className="feedback show bad";
+      fb.innerHTML = "So geht es: <b>" + t.model + "</b> – das üben wir im Warm-up weiter.";
+      check.classList.add("hidden"); inp.disabled = true;
+      step++; setProgress(); next.classList.remove("hidden");
+    }
+  };
+  next.onclick = ()=> runL3(i+1);
+}
+
+/* ---------- Endauswertung ---------- */
+function endScreen(){
+  levelChip.textContent = "Ergebnis";
+  bar.style.width = "100%";
+  const note = NOTEN[score];
+  const rows = Object.keys(CATS).map(key=>{
+    const s = catStats[key], good = s.all === 0 || s.ok >= Math.ceil(s.all * 0.75);
+    return `<div class="skill">
+      <span><span class="dot" style="background:${CATS[key].dot}; display:inline-block; vertical-align:-1px; margin-right:8px;"></span>${CATS[key].de}</span>
+      <span class="tag ${good?'can':'train'}">${good ? "kannst du ✓" : "noch üben"}</span>
+    </div>`;
+  }).join("");
+  stage.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <p style="font-size:15px; font-weight:700; color:var(--ink2);">Deine Notenpunkte heute</p>
+      <div class="result-note">${score} <span style="font-size:26px; color:var(--ink2); font-weight:700;">/ 15</span></div>
+      <p class="result-pts">entspricht der Note <b style="color:var(--ink)">${note}</b></p>
+      <div class="skills" style="text-align:left;">${rows}</div>
+      <p style="margin-top:16px; font-size:14.5px;">📸 Mach einen Screenshot für die Hausaufgabe.</p>
+      <button class="btn" id="again">Noch einmal spielen</button>
+    </div>`;
+  document.getElementById("again").onclick = ()=>{
+    score = 0; step = 0;
+    for(const k in catStats){ catStats[k].ok = 0; catStats[k].all = 0; }
+    scoreChip.textContent = "0 / 15"; bar.style.width = "0%";
+    startScreen();
+  };
+}
+
+startScreen();
+</script>
+</body>
+</html>
